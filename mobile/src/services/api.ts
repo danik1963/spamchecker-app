@@ -2,11 +2,11 @@ import axios from 'axios';
 import * as Device from 'expo-device';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
-// IP вашего компьютера в локальной сети (узнать: ipconfig в терминале)
-// Для реального устройства (iOS/Android) всегда используйте IP компьютера
-// Для эмуляторов: iOS симулятор = localhost, Android эмулятор = 10.0.2.2
+// Для разработки используем локальный IP, для production - Railway
 const LOCAL_IP = '192.168.0.10';
-const API_BASE_URL = `http://${LOCAL_IP}:3001/api`;
+const API_BASE_URL = __DEV__ 
+  ? `http://${LOCAL_IP}:3001/api`
+  : 'https://spamchecker-app-production.up.railway.app/api';
 
 const api = axios.create({
   baseURL: API_BASE_URL,
