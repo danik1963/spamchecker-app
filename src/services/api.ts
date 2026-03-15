@@ -1,7 +1,8 @@
 import axios from 'axios'
 import type { PhoneNumber, Comment, SearchResult } from '../types'
 
-const API_BASE_URL = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001/api').replace(/\/$/, '')
+const RAW_API_HOST = (import.meta.env.VITE_API_BASE_URL ?? 'http://localhost:3001').replace(/\/$/, '')
+const API_BASE_URL = `${RAW_API_HOST}/api`
 
 const api = axios.create({
   baseURL: API_BASE_URL,
