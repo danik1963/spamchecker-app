@@ -1,0 +1,115 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Platform {
+  phone
+  instagram
+  whatsapp
+  telegram
+}
+
+enum Category {
+  spam
+  fraud
+  scam
+  fake
+  unknown
+}
+
+enum Status {
+  pending
+  confirmed
+}
+
+model SpamRecord {
+  id           String    @id @default(uuid())
+  identifier   String
+  platform     Platform  @default(phone)
+  category     Category  @default(spam)
+  status       Status    @default(pending)
+  reportsCount Int       @default(1) @map("reports_count")
+  createdAt    DateTime  @default(now()) @map("created_at")
+  updatedAt    DateTime  @updatedAt @map("updated_at")
+  hiddenAt     DateTime? @map("hidden_at")
+
+  reports  Report[]
+  comments Comment[]
+
+  @@unique([identifier, platform])
+  @@map("spam_records")
+}
+
+model Report {
+  id          String    @id @default(uuid())
+  recordId    String    @map("record_id")
+  category    Category
+  description String?
+  deviceId    String    @map("device_id")
+  ipAddress   String    @map("ip_address")
+  createdAt   DateTime  @default(now()) @map("created_at")
+  deletedAt   DateTime? @map("deleted_at")
+  isValid     Boolean?  @map("is_valid")
+
+  record SpamRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+
+  @@unique([recordId, deviceId])
+  @@map("reports")
+}
+
+model Comment {
+  id        String    @id @default(uuid())
+  recordId  String    @map("record_id")
+  parentId  String?   @map("parent_id")
+  author    String    @default("Аноним")
+  text      String
+  likes     Int       @default(0)
+  deviceId  String    @map("device_id")
+  createdAt DateTime  @default(now()) @map("created_at")
+  deletedAt DateTime? @map("deleted_at")
+
+  record  SpamRecord @relation(fields: [recordId], references: [id], onDelete: Cascade)
+  parent  Comment?   @relation("CommentReplies", fields: [parentId], references: [id], onDelete: Cascade)
+  replies Comment[]  @relation("CommentReplies")
+
+  @@map("comments")
+}
+
+// ============ ADMIN PANEL MODELS ============
+
+enum AdminRole {
+  admin
+  moderator
+}
+
+model AdminUser {
+  id           String    @id @default(uuid())
+  username     String    @unique
+  passwordHash String    @map("password_hash")
+  role         AdminRole @default(moderator)
+  createdAt    DateTime  @default(now()) @map("created_at")
+  lastLoginAt  DateTime? @map("last_login_at")
+
+  moderationLogs ModerationLog[]
+
+  @@map("admin_users")
+}
+
+model ModerationLog {
+  id          String   @id @default(uuid())
+  adminUserId String   @map("admin_user_id")
+  actionType  String   @map("action_type")
+  entityType  String   @map("entity_type")
+  entityId    String   @map("entity_id")
+  payload     Json?
+  createdAt   DateTime @default(now()) @map("created_at")
+
+  adminUser AdminUser @relation(fields: [adminUserId], references: [id], onDelete: Cascade)
+
+  @@map("moderation_logs")
+}
